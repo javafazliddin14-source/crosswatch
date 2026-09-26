@@ -117,7 +117,7 @@ delete it to recompute from scratch.
 <!-- team:start -->
 | Member | Role | Did | Links |
 |---|---|---|---|
-| Sherzodov Abduraxmon | Team lead · website, EDA & report | Coordinated the team and the submission. EDA of the sample videos, the annotated-video renderer, the website with the live demo, and the technical report. |  |
+| Sherzodov Abduraxmon | Team lead · website, EDA & report | Coordinated the team and the submission. EDA of the sample videos, the annotated-video renderer, the website with the live demo, and the technical report. | [GitHub](https://github.com/garagaga7676-boop), [LinkedIn](https://linkedin.com/in/abdurahmon-sherzodov-9a591743a) |
 | Fazliddinov Javokhirshoh | Computer vision lead | Detection and tracking (YOLO11 + ByteTrack), the fast ffmpeg decoding path, registering each video to the reference view, the runtime budget, and the Part B accident-risk model and its calibration. | [GitHub](https://github.com/javafazliddin14-source) |
-| Baqbergenov Dauletbay | Scene modelling & rules | The intersection map (crossings, stop line, islands, zones), reading the traffic-light state, the per-class event rules, and checking every detected event against the footage. |  |
+| Baqbergenov Dauletbay | Scene modelling & rules | The intersection map (crossings, stop line, islands, zones), reading the traffic-light state, the per-class event rules, and checking every detected event against the footage. | [GitHub](https://github.com/dakengoe), [LinkedIn](https://linkedin.com/in/dawlet-baqbergenov-60273a364) |
 <!-- team:end -->
