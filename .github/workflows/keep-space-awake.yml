@@ -1,0 +1,17 @@
+# Free Hugging Face Spaces sleep after ~48 h without visitors. Visiting the site
+# every 6 hours keeps the demo awake for the judges.
+# Set the repository variable SPACE_URL (Settings > Secrets and variables > Actions > Variables),
+# e.g. https://<user>-crosswatch.hf.space
+name: keep-space-awake
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Visit the site
+        run: |
+          curl -fsS -o /dev/null -w "home %{http_code}\n" --max-time 120 "${{ vars.SPACE_URL }}/" || true
+          curl -fsS -w "\n" --max-time 120 "${{ vars.SPACE_URL }}/api/health" || true

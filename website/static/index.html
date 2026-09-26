@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CrossWatch - traffic events</title>
+<meta name="description" content="Traffic event detection and accident anticipation for a fixed CCTV intersection camera - WIUT Hackathon 2026, Computer Vision track.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='10' y='2' width='12' height='28' rx='4' fill='%23222'/><circle cx='16' cy='9' r='3.5' fill='%23ff5a5f'/><circle cx='16' cy='16' r='3.5' fill='%23ffb020'/><circle cx='16' cy='23' r='3.5' fill='%2335c97a'/></svg>">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<nav class="top">
+  <div class="wrap">
+    <a class="brand" href="#top">Cross<span>Watch</span> <small class="muted">· WIUT CV 2026</small></a>
+    <div class="links">
+      <a href="#team">Team</a><a href="#approach">Approach</a><a href="#eda">EDA</a><a href="#results">Results</a>
+      <a href="#dashboard">Dashboard</a><a href="#demo">Live demo</a><a href="#report">Report</a><a href="#links">Links</a>
+    </div>
+    <button class="theme-btn" id="themeBtn" aria-label="toggle theme">◐</button>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1>Traffic event detection for one Tashkent intersection</h1>
+    <p class="lead">Our entry for the WIUT Hackathon 2026 CV track. From a fixed 4K CCTV camera we detect jaywalking,
+      cars not yielding at crossings, red-light runs, stop-line violations, stopped vehicles and congestion, and we
+      output an accident-risk score for every frame. It runs offline: YOLO11 + ByteTrack for road users, the traffic
+      light state read from the lamps in the image, and rules on the trajectories.</p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
+
+<section id="team"><div class="wrap">
+  <h2>Team</h2>
+  <p class="muted">Who built what.</p>
+  <div class="grid g3" id="teamGrid"></div>
+</div></section>
+
+<section id="approach"><div class="wrap">
+  <h2>Problem and approach</h2>
+  <p>Input: one <code>.mp4</code> from a fixed camera. Output: <code>[start_sec, end_sec, label]</code> segments over 14
+    classes, scored by macro-F1 at temporal IoU 0.3 / 0.5 / 0.7. Separately, a causal risk score must rise
+    <em>before</em> an accident. We have four unlabeled sample clips (no training labels for this camera), so we
+    invest in things that generalise without labels: a strong pretrained detector, a tracker, an accurate model of
+    <em>this</em> scene, and rules whose thresholds have physical meaning.</p>
+  <div class="card pipeline" id="pipelineCard">
+    <svg viewBox="0 0 1100 330" role="img" aria-label="Pipeline diagram">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
+      <rect class="box" x="10" y="130" width="150" height="70" rx="10"/><text x="85" y="160" text-anchor="middle">4K .mp4 (29.97 fps)</text><text class="sub" x="85" y="180" text-anchor="middle">ffmpeg: 5 Hz, 1280 px</text>
+      <rect class="box l" x="210" y="40" width="180" height="70" rx="10"/><text x="300" y="70" text-anchor="middle">YOLO11m detector</text><text class="sub" x="300" y="90" text-anchor="middle">COCO weights · learned</text>
+      <rect class="box r" x="210" y="130" width="180" height="70" rx="10"/><text x="300" y="160" text-anchor="middle">Signal lamp reader</text><text class="sub" x="300" y="180" text-anchor="middle">full-res crops · HSV · rule</text>
+      <rect class="box l" x="440" y="40" width="170" height="70" rx="10"/><text x="525" y="70" text-anchor="middle">ByteTrack</text><text class="sub" x="525" y="90" text-anchor="middle">IDs over time</text>
+      <rect class="box r" x="440" y="130" width="170" height="70" rx="10"/><text x="525" y="160" text-anchor="middle">Phase timeline</text><text class="sub" x="525" y="180" text-anchor="middle">debounced red / green</text>
+      <rect class="box" x="210" y="230" width="180" height="70" rx="10"/><text x="300" y="260" text-anchor="middle">View registration</text><text class="sub" x="300" y="280" text-anchor="middle">SIFT + RANSAC homography</text>
+      <path class="arrow" d="M160 185 C185 185 185 265 208 265"/><path class="arrow" d="M390 265 L438 265"/>
+      <rect class="box" x="440" y="230" width="170" height="70" rx="10"/><text x="525" y="260" text-anchor="middle">Scene model</text><text class="sub" x="525" y="280" text-anchor="middle">crossings · stop line · flow field</text>
+      <rect class="box" x="660" y="40" width="170" height="70" rx="10"/><text x="745" y="70" text-anchor="middle">Trajectories</text><text class="sub" x="745" y="90" text-anchor="middle">ground point · speed in h/s</text>
+      <rect class="box r" x="880" y="100" width="200" height="90" rx="10"/><text x="980" y="130" text-anchor="middle">Per-class rules</text><text class="sub" x="980" y="150" text-anchor="middle">jaywalking · yield · red light</text><text class="sub" x="980" y="168" text-anchor="middle">stop line · stopped · wrong way</text>
+      <rect class="box" x="880" y="230" width="200" height="70" rx="10"/><text x="980" y="260" text-anchor="middle">Segments</text><text class="sub" x="980" y="280" text-anchor="middle">merge gaps · drop blips</text>
+      <path class="arrow" d="M160 150 C185 150 185 75 208 75"/><path class="arrow" d="M160 165 L208 165"/>
+      <path class="arrow" d="M390 75 L438 75"/><path class="arrow" d="M390 165 L438 165"/>
+      <path class="arrow" d="M610 75 L658 75"/><path class="arrow" d="M830 75 C860 75 855 130 878 130"/>
+      <path class="arrow" d="M610 165 L878 150"/><path class="arrow" d="M610 265 C760 265 800 175 878 170"/>
+      <path class="arrow" d="M980 190 L980 228"/>
+    </svg>
+    <p class="muted" style="margin:6px 0 0">Blue outline = learned (pretrained weights, no fine-tuning); yellow = hand-written rules; grey = geometry and statistics measured from the sample videos.</p>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>Part A: event detection</h3>
+      <ol>
+        <li><b>Decode smartly.</b> ffmpeg (bundled static binary) decodes the 4K H.264 stream using all cores and drops to 5 Hz and
+          1280 px <em>before</em> Python sees a pixel. The two traffic-light heads are cut from the full-resolution frame in the same pass.</li>
+        <li><b>Register the view.</b> The framing differs between clips by up to ~3 % (re-aimed camera). A median background plate is matched to our reference view
+          (SIFT on CLAHE-normalised images + RANSAC homography, ~5 s). All scene geometry lives in the reference view; lamp boxes are mapped into the video, and tracks are mapped back.</li>
+        <li><b>Detect + track.</b> YOLO11m (COCO) at 1280 px finds people, cars, buses, trucks, bikes and animals; ByteTrack links them into tracks.</li>
+        <li><b>Kinematics.</b> Each track becomes a ground-contact trajectory (box bottom-centre), smoothed, with speed measured in
+          <em>own box heights per second</em>. That unit is roughly perspective-invariant, so one threshold works near and far.</li>
+        <li><b>Signal phase.</b> Lit red / green pixels in the two camera-facing signal heads, debounced over 1 s.</li>
+        <li><b>Rules</b> combine trajectories, the scene polygons, the learned flow field and the phase (table below).</li>
+        <li><b>Segments</b> are merged across short gaps, blips are dropped, and same-class overlaps are unioned (the organisers' convention).</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Part B: accident anticipation (causal)</h3>
+      <p>The estimator never opens the file and never touches Part A. It runs its own detector + tracker on every 6th streamed
+        frame (5 Hz, 960 px) and scores:</p>
+      <ul>
+        <li><b>Time-to-collision</b> between road users: footprints (bottom 30 % of the box) extrapolated at constant velocity for up to 3 s.
+          Only pairs that close faster than 0.8 heights/s count, so dense queues stay quiet.</li>
+        <li><b>Hard braking</b>: speed lost within ~1 s.</li>
+      </ul>
+      <p>Hazard -> logistic calibrated so normal traffic stays below the 0.5 alarm threshold, with a 1 s half-life decay.</p>
+    </div>
+  </div>
+  <h3>Per-class logic</h3>
+  <div class="table-scroll card"><table id="rulesTable"></table></div>
+  <h3>Models and data</h3>
+  <div class="table-scroll card"><table>
+    <tr><th>Component</th><th>What</th><th>Licence</th><th>Why</th></tr>
+    <tr><td>Detector</td><td>Ultralytics YOLO11m, COCO-pretrained, fp16</td><td>AGPL-3.0</td><td>Best accuracy/latency on a T4 at 1280 px; the far sidewalk has 20-px pedestrians.</td></tr>
+    <tr><td>Tracker</td><td>ByteTrack (Ultralytics implementation)</td><td>MIT / AGPL-3.0</td><td>Uses low-confidence boxes, so tracks survive occlusion behind buses.</td></tr>
+    <tr><td>Training data</td><td>COCO 2017 (via the pretrained weights); no fine-tuning</td><td>CC BY 4.0</td><td>No labels exist for this camera; we invested in scene modelling instead.</td></tr>
+    <tr><td>Scene model</td><td>Flow field + road mask learned from the 4 sample clips; crossings / stop line / lamp boxes measured by hand</td><td>own work</td><td>The camera never moves, so geometry is a constant.</td></tr>
+  </table></div>
+</div></section>
+
+<section id="eda"><div class="wrap">
+  <h2>EDA of the sample videos</h2>
+  <p class="muted">All numbers are computed by <code>tools/eda.py</code> from our own detections and tracks.</p>
+  <div class="table-scroll card"><table id="edaTable"></table></div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3>Objects in view over time</h3><div class="tabs" id="countTabs"></div><div class="chart-box"><canvas id="countChart"></canvas></div>
+      <p class="muted" id="countNote"></p></div>
+    <div class="card"><h3>Lighting (mean brightness V)</h3><div class="chart-box"><canvas id="lightChart"></canvas></div>
+      <p class="muted">Two clips are midday (hard sun, long shadows), C3902 is early evening and C3905 is dusk (about half the brightness). Brightness is flat within each clip. The dusk clip is where far pedestrians are hardest to detect, and CLAHE-normalised registration still matches it to the reference view.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <figure class="card"><img loading="lazy" src="media/eda/heat_vehicles.jpg" alt="vehicle heatmap"><figcaption><b>Moving-vehicle heatmap.</b> Two dominant corridors: the near approach, which queues at the stop line, and the far carriageway, plus a fan of turns through the box.</figcaption></figure>
+    <figure class="card"><img loading="lazy" src="media/eda/heat_people.jpg" alt="pedestrian heatmap"><figcaption><b>Pedestrian heatmap.</b> Hot on both sidewalks and the two zebra crossings, and a visible desire line across the asphalt between the crossings. That line is exactly where jaywalking happens.</figcaption></figure>
+    <figure class="card"><img loading="lazy" src="media/eda/trajectories.jpg" alt="trajectories"><figcaption><b>Vehicle trajectories</b>, coloured by heading (hue = direction of travel).</figcaption></figure>
+    <figure class="card"><img loading="lazy" src="media/eda/flow.jpg" alt="flow field"><figcaption><b>Learned flow field and road mask.</b> The top-2 headings per cell (arrow length = share). Grey cells form the carriageway mask used by the pedestrian rules. Driving against a cell whose flow is one-directional is a wrong-way candidate.</figcaption></figure>
+  </div>
+  <div class="card" style="margin-top:16px"><h3>Signal phases read from the lamps</h3><div id="phaseBars"></div>
+    <p class="muted" id="phaseNote"></p></div>
+  <div class="card" style="margin-top:16px"><h3>Findings that shaped the solution</h3><ul id="findings"></ul></div>
+</div></section>
+
+<section id="results"><div class="wrap">
+  <h2>Results on the sample videos</h2>
+  <p class="muted">Every sample video, annotated by our own renderer: boxes coloured by class, active events as banners, the signal
+    lamp state (dot) and the live risk bar. Click an event on the timeline or in the table to jump there.</p>
+  <div class="tabs" id="resTabs"></div>
+  <div class="grid g2">
+    <div class="player"><video id="resVideo" controls preload="metadata" playsinline></video></div>
+    <div class="card" style="padding:12px"><div class="table-scroll" style="max-height:360px;overflow-y:auto"><table class="ev-table" id="resEvents"></table></div></div>
+  </div>
+  <div class="timeline card" id="resTimeline" style="margin-top:12px"></div>
+  <div class="card" style="margin-top:12px"><h3 style="margin-top:0">Accident risk (Part B) and signal state</h3><div class="chart-box"><canvas id="resRisk"></canvas></div></div>
+  <div class="card" style="margin-top:16px"><h3 style="margin-top:0">Failure cases</h3><ul id="failures"></ul></div>
+</div></section>
+
+<section id="dashboard"><div class="wrap">
+  <h2>Operator dashboard</h2>
+  <p class="muted">What a city traffic centre would watch: events per class and per minute, across all sample footage.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Events by class</h3><div class="chart-box"><canvas id="dashClass"></canvas></div></div>
+    <div class="card"><h3>Events per minute of footage</h3><div class="chart-box"><canvas id="dashRate"></canvas></div></div>
+  </div>
+</div></section>
+
+<section id="demo"><div class="wrap">
+  <h2>Live demo</h2>
+  <p>Upload an <code>.mp4</code> from this camera (any resolution, <b>up to 3 minutes and 200 MB</b>). The same pipeline as our
+    submission runs on the server and returns the events, an annotated video, the timeline and the risk curve.
+    The demo server has no GPU, so processing takes about 5x the clip length (a 20-second clip takes around 1.5-2 minutes).
+    Short clips are best. No clip at hand? <a href="media/demo_sample.mp4" download>Download a 20-second sample</a> (3 MB, contains a red-light run at 0:04).</p>
+  <label class="drop" id="drop"><input type="file" id="file" accept="video/mp4,.mp4">
+    <div><b>Drop a video here</b> or click to choose</div><div class="muted" id="fileName">no file selected</div></label>
+  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button class="btn" id="runBtn" disabled>Analyse</button><span class="muted" id="demoStage"></span></div>
+  <div class="progress"><div id="demoBar"></div></div>
+  <div class="error" id="demoErr"></div>
+  <div id="demoOut" hidden>
+    <div class="grid g2" style="margin-top:12px">
+      <div class="player"><video id="demoVideo" controls playsinline></video></div>
+      <div class="card" style="padding:12px"><div class="table-scroll" style="max-height:360px;overflow-y:auto"><table class="ev-table" id="demoEvents"></table></div>
+        <p><a id="demoJson" download="events.json" href="#">Download events JSON</a></p></div>
+    </div>
+    <div class="timeline card" id="demoTimeline" style="margin-top:12px"></div>
+    <div class="card" style="margin-top:12px"><div class="chart-box"><canvas id="demoRisk"></canvas></div></div>
+  </div>
+</div></section>
+
+<section id="report"><div class="wrap">
+  <h2>Technical report</h2>
+  <div class="card" id="reportBody"></div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>Links</h2>
+  <ul id="linkList"></ul>
+</div></section>
+
+<footer><div class="wrap">CrossWatch · WIUT Hackathon 2026 · Computer Vision track. Footage is shown only as provided by the organisers; no personal data is extracted.</div></footer>
+</body>
+</html>

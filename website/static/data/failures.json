@@ -1,0 +1,9 @@
+[
+ "<b>Legal turn flagged as wrong-way</b> (C3896, ~93 s, before the fix): a white car from the east arm cut leftwards through the stationary exit queue toward the south-west arm. The learned flow field had rarely seen that heading there. Fixed by only judging cells with one dominant direction, which also means wrong-way inside the junction box is now undetectable.",
+ "<b>Queued car on the stop line read as a red-light runner</b> (C3896, ~63 s, before the fix): box jitter moved the ground point of a car waiting at the line across it. Fixed by requiring real speed at the crossing and a clear passage beyond the line.",
+ "<b>Amber clearing read as red-light running</b> (C3897, every cycle, before the fix): cars crossing 1-5 s after our lamp turns red. The approach's own lamp lags the heads we can see. A 4 s grace period now hides these, and any genuine early-red runs with them.",
+ "<b>Pedestrians beside the zebra read as jaywalking</b> (all clips, before the fix): most people walk 1-2 m below the painted stripes of the north crossing.",
+ "<b>Delivery scooter on the crossing</b> (C3902, ~26-36 s): a moped rides slowly along the south-west crossing among pedestrians and is reported as failure_to_yield. Arguably correct, but annotators may disagree.",
+ "<b>Parked cars as stopped vehicles</b> (C3902, the whole clip, before the fix): cars wait in the far kerb lane for minutes. That lane is now excluded, so a real breakdown there would be missed.",
+ "<b>Tiny far pedestrians</b> (dusk clips): people on the far sidewalk are ~20 px tall, and the tracker occasionally jumps an ID between two of them, producing a 'person' that crosses the road at car speed. These are removed by a size, confidence and speed-plausibility filter."
+]

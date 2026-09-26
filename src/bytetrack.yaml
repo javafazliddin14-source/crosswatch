@@ -1,0 +1,10 @@
+# ByteTrack settings for 5 Hz sampling of a fixed CCTV camera.
+# Ultralytics assumes 30 fps for track_buffer; 60 -> ~2 s of 30 fps == ~10 s at our 5 Hz,
+# long enough to bridge occlusions by buses without merging distinct vehicles.
+tracker_type: bytetrack
+track_high_thresh: 0.35
+track_low_thresh: 0.1
+new_track_thresh: 0.4
+track_buffer: 60
+match_thresh: 0.85
+fuse_score: True

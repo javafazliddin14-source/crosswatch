@@ -1,0 +1,10 @@
+# Evaluation run (python run_submission.py ...). Pinned for reproducibility.
+# The default PyPI torch wheel on Linux ships CUDA 12 kernels (T4 / sm_75 supported).
+# For an RTX 50xx (Blackwell) dev box install torch from https://download.pytorch.org/whl/cu128 first.
+numpy>=1.24
+opencv-python-headless>=4.8
+torch==2.11.0
+torchvision==0.26.0
+ultralytics==8.4.162
+lap==0.5.13
+imageio-ffmpeg==0.6.0     # bundles a static ffmpeg binary: fast 4K decode, no system install

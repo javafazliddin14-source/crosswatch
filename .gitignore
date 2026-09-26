@@ -1,0 +1,10 @@
+.venv/
+.cache/
+__pycache__/
+*.pyc
+samples/
+*.MP4
+*.mp4
+!website/static/media/**/*.mp4
+/predictions.json
+SESSION_NOTES.md

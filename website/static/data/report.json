@@ -1,0 +1,48 @@
+{
+ "sections": [
+  {
+   "title": "What we built",
+   "html": "<p>A pipeline that turns one 4K clip of this intersection into traffic-event segments, plus a causal accident-risk curve. It uses a pretrained YOLO11m + ByteTrack for road users, reads the traffic-signal phase from the pixels of the two signal heads that face the camera, uses a scene model of this exact view (crossings, stop line, islands, curb-parking lane, direction zones, and a flow field learned from the samples), and applies eight transparent per-class rules. Measured cold with the official harness, Part A runs at ~0.3× real time and Part A + B at ~1.0× (budget 3×). Everything is open-weights and offline.</p>"
+  },
+  {
+   "title": "What worked",
+   "items": [
+    "<b>Reading the lamps.</b> Cutting the signal heads from the full-resolution frame inside the same ffmpeg pass gives a nearly noise-free red/green timeline (&lt; 2 % of samples unreadable). It is the backbone of red_light, stop_line, congestion and the queue exclusions.",
+    "<b>Registering every clip to one reference view.</b> The sample framings differ by up to 3 %. Without it the 15-px lamp crops missed the lamps entirely in C3902 (so red_light could never fire there), and every crossing and zone was misplaced. A SIFT + RANSAC homography from a 9-frame median background takes ~5 s and puts all clips within a pixel or two of the reference.",
+    "<b>Decoding in ffmpeg.</b> Letting ffmpeg drop frames and resize (with all cores) instead of OpenCV cut Part A from 2.25× to ~0.3× real time.",
+    "<b>Perspective-invariant units.</b> Speeds in own-box-heights per second let a single stillness threshold (0.12 h/s) work for a car at the far kerb and one at the bottom edge.",
+    "<b>Reviewing every candidate against the footage.</b> Frame strips of each candidate exposed systematic false positives (people walking beside the zebra, cars parked in the curb lane, box jitter at the stop line, amber-phase clearing). Each became a concrete rule change: person-on-road track segments fell from ~270 to 66 once the crossings' walking band was modelled, emitted jaywalking events from 34 to 17, and failure_to_yield from 72 to 37 once only walkers on the painted stripes count.",
+    "<b>Risk calibration on normal traffic.</b> Ignoring already-overlapping footprints (occlusion, not danger) and weighting TTC by closing speed pushed the peak hazard on 18 min of normal traffic to ~0.63. In the official harness run the samples raise exactly one alarm: two buses merging side by side through the junction (C3902, 232 s), a genuinely tight interaction but not an accident."
+   ]
+  },
+  {
+   "title": "What did not work",
+   "items": [
+    "<b>No independent dev set.</b> We reviewed candidates visually but did not produce exhaustive frame-accurate labels for all 18 minutes, so we cannot report F1 or recall with confidence. Missed events (false negatives) are the unknown.",
+    "<b>accident and near_miss are not detected in Part A.</b> The samples contain neither, so any rule would be tuned blind, and a false class costs a whole macro-F1 slot. Part B's risk score is our only coverage.",
+    "<b>Part B cannot be validated</b> for the same reason: its calibration only guarantees quiet behaviour on normal traffic. mTTA will be short (the alarm fires when footprints are ≲ 0.3 s from contact).",
+    "<b>Wrong-way needed tightening.</b> The first version flagged legal turns across the junction box (e.g. a car from the east arm cutting to the south-west). It now only fires against a strongly one-directional lane and is silent on the samples: untested on real positives.",
+    "<b>Signal lag.</b> The heads we read run a few seconds ahead of the approach's own lamp (seen only from behind). A 4 s grace period fixes the systematic false red-light runs, but it also hides genuine runs in the first 4 s of red.",
+    "<b>Boundary precision.</b> Jaywalking and failure_to_yield segments of overlapping people are unioned (the organisers' convention). On a busy crossing that produces long segments whose IoU with annotations is uncertain.",
+    "<b>Dusk clips</b> (C3902, C3905): far pedestrians are detected less reliably, so jaywalking recall on the far carriageway is lower there.",
+    "<b>Not attempted:</b> illegal_u_turn / illegal_turn / solid_line_crossing (the legality depends on signage we could not verify), fire_smoke, and debris-type road_obstacle (only animals are detectable with COCO classes)."
+   ]
+  },
+  {
+   "title": "What we would do next",
+   "items": [
+    "Label the four samples exhaustively in CVAT and tune thresholds against evaluate.py at IoU 0.7, especially segment boundaries.",
+    "Fine-tune the detector on frames from this camera (pseudo-labels plus corrections), mainly for 15-25 px pedestrians at dusk.",
+    "Train a clip classifier (e.g. VideoMAE on DoTA / CCD) to re-score accident and near_miss candidates from the Part B hazard peaks.",
+    "Estimate a homography from lane markings to get metric speeds and real TTC, and add lane polylines for solid_line_crossing and illegal turns.",
+    "Model the approach's own lamp lag per cycle (from queue discharge) instead of a fixed 4 s grace."
+   ]
+  }
+ ],
+ "links": {
+  "Repository": "https://github.com/javafazliddin14-source/crosswatch",
+  "Weights": "https://github.com/javafazliddin14-source/crosswatch/tree/main/weights",
+  "predictions_samples.json": "https://github.com/javafazliddin14-source/crosswatch/blob/main/predictions_samples.json",
+  "Website and live demo": "https://huggingface.co/spaces/javafazliddin14/crosswatch"
+ }
+}
