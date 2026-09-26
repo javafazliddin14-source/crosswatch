@@ -65,9 +65,16 @@ section { padding: 56px 0; border-bottom: 1px solid var(--line); }
 .g3 { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
 .card h3 { margin-top: 0; }
-.card.note { border-left: 4px solid var(--accent); max-width: 860px; }
-.card.note ol { padding-left: 20px; }
-.card.note li { margin-bottom: 8px; }
+.features-title { margin-top: 32px; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+.feature {
+  display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: var(--radius);
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  color: var(--text); text-decoration: none; transition: transform .15s, border-color .15s;
+}
+.feature:hover { transform: translateY(-2px); border-color: var(--accent); }
+.feature .f-title { font-weight: 700; font-size: 1.02rem; }
+.feature .f-text { color: var(--muted); font-size: .92rem; }
 figure { margin: 0; }
 figure img { width: 100%; border-radius: 8px; display: block; }
 figcaption { color: var(--muted); font-size: .88rem; margin-top: 8px; }
