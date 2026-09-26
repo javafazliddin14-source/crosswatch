@@ -37,7 +37,27 @@
 
 <section id="judges"><div class="wrap">
   <h2>For the judges</h2>
-  <p class="lead" style="color:var(--text)">CrossWatch finds traffic violations (jaywalking, red-light runs, cars not yielding to
+  <div class="card note">
+    <p><b>Dear reviewers,</b></p>
+    <p>thank you for taking the time to look at our work. If you only have a few minutes, this is what we would most like you to see:</p>
+    <ol>
+      <li><b>Try the <a href="#demo">live demo</a> first.</b> Press "Try the sample clip". In about a minute, right in your browser,
+        it finds a car running the red light at 0:04 and shows it on the video, the timeline and the risk curve.</li>
+      <li><b>How we read the traffic light.</b> The camera sees most signals from behind, so we read the two lamps that do face it,
+        pixel by pixel, from the full 4K frame. That one signal drives the red-light, stop-line and congestion rules
+        (<a href="#approach">Approach</a>).</li>
+      <li><b>The camera is not framed the same in every clip.</b> Two of the four samples are shifted by up to 3%, which silently broke
+        our hand-drawn map of the intersection at first. Now every video is aligned to one reference view before any rule runs
+        (<a href="#eda">EDA findings</a>).</li>
+      <li><b>Every sample video, annotated by our own code,</b> is in <a href="#results">Results</a>, together with a list of the cases
+        where we are still wrong.</li>
+    </ol>
+    <p>To run the submission: <code>pip install -r requirements.txt</code>, then
+      <code>python run_submission.py --videos &lt;folder&gt; --out predictions.json</code>.
+      No API keys and no internet needed; it takes about 1x the video length on a GPU.</p>
+    <p style="margin-bottom:0">Thank you,<br>Abduraxmon, Javokhirshoh and Dauletbay</p>
+  </div>
+  <p class="lead" style="color:var(--text);margin-top:20px">CrossWatch finds traffic violations (jaywalking, red-light runs, cars not yielding to
     pedestrians, stop-line violations, stopped vehicles, congestion) in the intersection CCTV video and gives an
     accident-risk score for every frame.</p>
   <div class="grid g3" style="margin-top:16px">
@@ -71,7 +91,7 @@
         <li>The <a href="#demo">live demo</a> has a "Try the sample clip" button: one click, and it finds a red-light run at 0:04.</li>
         <li>The <a href="#eda">EDA</a> section lists the findings that shaped each rule.</li>
       </ul>
-      <p style="margin-bottom:0"><a href="https://github.com/javafazliddin14-source/crosswatch/tree/v1.3">Repository (v1.3)</a> ·
+      <p style="margin-bottom:0"><a href="https://github.com/javafazliddin14-source/crosswatch/tree/v1.4">Repository (v1.4)</a> ·
         <a href="predictions_samples.json">predictions_samples.json</a></p>
     </div>
   </div>

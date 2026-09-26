@@ -65,6 +65,9 @@ section { padding: 56px 0; border-bottom: 1px solid var(--line); }
 .g3 { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
 .card h3 { margin-top: 0; }
+.card.note { border-left: 4px solid var(--accent); max-width: 860px; }
+.card.note ol { padding-left: 20px; }
+.card.note li { margin-bottom: 8px; }
 figure { margin: 0; }
 figure img { width: 100%; border-radius: 8px; display: block; }
 figcaption { color: var(--muted); font-size: .88rem; margin-top: 8px; }
