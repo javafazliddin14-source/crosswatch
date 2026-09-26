@@ -42,7 +42,7 @@
  "links": {
   "Repository": "https://github.com/javafazliddin14-source/crosswatch",
   "Weights": "https://github.com/javafazliddin14-source/crosswatch/tree/main/weights",
-  "predictions_samples.json": "https://github.com/javafazliddin14-source/crosswatch/blob/main/predictions_samples.json",
-  "Website and live demo": "https://huggingface.co/spaces/javafazliddin14/crosswatch"
+  "predictions_samples.json": "predictions_samples.json",
+  "Website and live demo": "https://javafazliddin14-source.github.io/crosswatch/"
  }
 }

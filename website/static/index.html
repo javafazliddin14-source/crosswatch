@@ -8,6 +8,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='10' y='2' width='12' height='28' rx='4' fill='%23222'/><circle cx='16' cy='9' r='3.5' fill='%23ff5a5f'/><circle cx='16' cy='16' r='3.5' fill='%23ffb020'/><circle cx='16' cy='23' r='3.5' fill='%2335c97a'/></svg>">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js" defer></script>
+<script src="demo.js" defer></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -154,10 +156,14 @@
 
 <section id="demo"><div class="wrap">
   <h2>Live demo</h2>
-  <p>Upload an <code>.mp4</code> from this camera (any resolution, <b>up to 3 minutes and 200 MB</b>). The same pipeline as our
-    submission runs on the server and returns the events, an annotated video, the timeline and the risk curve.
-    The demo server has no GPU, so processing takes about 5x the clip length (a 20-second clip takes around 1.5-2 minutes).
-    Short clips are best. No clip at hand? <a href="media/demo_sample.mp4" download>Download a 20-second sample</a> (3 MB, contains a red-light run at 0:04).</p>
+  <p>Upload an <code>.mp4</code> from this camera (any resolution, <b>up to 3 minutes and 200 MB</b>) and get back the events,
+    the annotated video, the timeline and the risk curve. The demo runs <b>in your browser</b>: the video is never uploaded.
+    It uses the same scene map, rules and risk model as our submission with a lighter detector (YOLO11n instead of YOLO11m),
+    so results can differ slightly from <code>predictions_samples.json</code>. Expect roughly 1-3x the clip length on a laptop;
+    short clips are best. No clip at hand? Use the sample (20 s, contains a red-light run at 0:04):
+    <button class="btn" id="sampleBtn" type="button" style="padding:4px 10px">Try the sample clip</button>
+    or <a href="media/demo_sample.mp4" download>download it</a>.</p>
+  <p class="muted" id="demoMode"></p>
   <label class="drop" id="drop"><input type="file" id="file" accept="video/mp4,.mp4">
     <div><b>Drop a video here</b> or click to choose</div><div class="muted" id="fileName">no file selected</div></label>
   <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -166,7 +172,7 @@
   <div class="error" id="demoErr"></div>
   <div id="demoOut" hidden>
     <div class="grid g2" style="margin-top:12px">
-      <div class="player"><video id="demoVideo" controls playsinline></video></div>
+      <div class="player overlay-wrap"><video id="demoVideo" controls playsinline muted></video><canvas id="demoOverlay"></canvas></div>
       <div class="card" style="padding:12px"><div class="table-scroll" style="max-height:360px;overflow-y:auto"><table class="ev-table" id="demoEvents"></table></div>
         <p><a id="demoJson" download="events.json" href="#">Download events JSON</a></p></div>
     </div>

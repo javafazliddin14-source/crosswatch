@@ -55,9 +55,10 @@ run_submission.py      organisers' harness, unchanged
 evaluate.py            organisers' metric, unchanged
 src/                   video.py (decode), detect_track.py, tracks.py, signals.py, scene.py, rules.py,
                        segments.py, pipeline.py (Part A), risk.py (Part B), render.py, analyze.py
-tools/                 build_scene.py, calibrate_risk.py, eda.py, export_results.py
+tools/                 build_scene.py, calibrate_risk.py, eda.py, export_results.py, export_web.py
 weights/               yolo11m.pt, scene_flow.npz, download.sh, SHA256SUMS
-website/               server.py (FastAPI: site + live demo API), static/ (HTML/CSS/JS, data, media)
+website/               server.py (FastAPI: site + server-side demo API), static/ (HTML/CSS/JS, data, media,
+                       demo.js + demo/ for the in-browser demo)
 predictions_samples.json
 ```
 
@@ -69,24 +70,29 @@ python -m tools.calibrate_risk --videos samples    # prints alarm counts per thr
 python run_submission.py --videos samples --out predictions_samples.json --team crosswatch
 python -m tools.eda           --videos samples     # website/static/data/eda.json + figures
 python -m tools.export_results --videos samples    # annotated videos + per-video JSON for the site
+python -m tools.export_web                         # scene.json + YOLO11n ONNX for the in-browser demo
 python -m website.server                           # http://localhost:8000
 ```
 
 ## Website and live demo
 
-`python -m website.server` serves the site and the demo API on `http://localhost:8000` (`$PORT` if set).
-The demo accepts `.mp4` uploads of up to 200 MB and 3 minutes, runs the exact submission pipeline (Part A + causal Part B
-+ annotated render) in a background queue, and reports progress. It runs on CPU too (slower).
+Live site: **https://javafazliddin14-source.github.io/crosswatch/** (GitHub Pages, deployed from `website/static/`
+by `.github/workflows/pages.yml` on every push to `main`).
 
-To publish it, any Docker host works. For a Hugging Face Space (Docker SDK, free CPU tier), push this repository with the
-root `Dockerfile` and set the Space's start command to `python -m website.server` and `PORT=7860`. The static part
-(`website/static/`) also works on its own (GitHub Pages / Netlify), minus the upload demo.
+The live demo has two modes and picks one automatically:
+
+* **In the browser** (the public site): `website/static/demo.js` runs the pipeline on the visitor's machine with
+  onnxruntime-web. It uses the same scene map (`website/static/demo/scene.json`, exported by `python -m tools.export_web`),
+  the same rules and thresholds and the same risk model, with YOLO11n instead of YOLO11m, a simplified ByteTrack-style
+  tracker and translation-only view alignment. The video is never uploaded. A 20 s clip takes about a minute on a laptop.
+* **On a server**: `python -m website.server` serves the same site plus an upload API that runs the exact submission
+  pipeline (Part A + causal Part B + annotated render) in a background queue on `http://localhost:8000` (`$PORT` if set).
 
 ## Data and licences
 
 | What | Licence | Use |
 |---|---|---|
-| COCO 2017 (through the pretrained YOLO11m weights) | CC BY 4.0 | detector pretraining (by Ultralytics) |
+| COCO 2017 (through the pretrained YOLO11m / YOLO11n weights) | CC BY 4.0 | detector pretraining (by Ultralytics) |
 | Sample videos from the organisers | organisers' terms | scene model, calibration, EDA; not redistributed in this repo |
 
 No other dataset was used, and no model was fine-tuned.
@@ -96,7 +102,7 @@ No other dataset was used, and no model was fine-tuned.
 * [Ultralytics](https://github.com/ultralytics/ultralytics) (AGPL-3.0): YOLO11 inference and its ByteTrack implementation.
 * ByteTrack algorithm: Zhang et al., 2022 (MIT).
 * [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) (BSD-2) for the bundled ffmpeg binary.
-* Chart.js (MIT) on the website.
+* Chart.js (MIT) and onnxruntime-web (MIT) on the website.
 
 ## Determinism
 

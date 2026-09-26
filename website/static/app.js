@@ -312,9 +312,26 @@ function demo() {
   drop.addEventListener("dragleave", () => drop.classList.remove("over"));
   drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); pick(e.dataTransfer.files[0]); });
 
+  // With website/server.py running, the full Python pipeline is used; on the static site
+  // (GitHub Pages) the lighter in-browser pipeline from demo.js runs on the visitor's machine.
+  let serverMode = false;
+  fetch("api/health").then((r) => r.ok && r.json()).then((j) => {
+    serverMode = !!(j && j.ok);
+    $("#demoMode").textContent = serverMode
+      ? "Mode: full pipeline on the server (same code as the submission)."
+      : "Mode: in your browser. The video is not uploaded anywhere; a lighter model runs on your machine.";
+  }).catch(() => {});
+
+  $("#sampleBtn").addEventListener("click", async () => {
+    const blob = await (await fetch("media/demo_sample.mp4")).blob();
+    pick(new File([blob], "demo_sample.mp4", { type: "video/mp4" }));
+    run.click();
+  });
+
   run.addEventListener("click", () => {
     if (!file) return;
     run.disabled = true; err.textContent = ""; $("#demoOut").hidden = true;
+    if (!serverMode) { runInBrowser(); return; }
     const fd = new FormData(); fd.append("video", file);
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "api/jobs");
@@ -338,11 +355,24 @@ function demo() {
     setTimeout(() => poll(id), 1000);
   };
 
+  const runInBrowser = async () => {
+    try {
+      const res = await Demo.run(file, (s, p) => { stage.textContent = s; bar.style.width = `${Math.round(100 * p)}%`; });
+      bar.style.width = "100%";
+      showDemo(null, res);
+      Demo.attachOverlay($("#demoVideo"), $("#demoOverlay"), res, CLASS_COLORS);
+    } catch (e) {
+      err.textContent = `Could not analyse this video: ${e.message || e}`;
+    }
+    run.disabled = false;
+  };
+
   const showDemo = (id, res) => {
     $("#demoOut").hidden = false;
     stage.textContent = `done: ${res.events.length} events`;
     const v = $("#demoVideo");
-    v.src = `api/jobs/${id}/video`;
+    v.src = id ? `api/jobs/${id}/video` : res.url;
+    $("#demoOverlay").hidden = !!id;          // the server returns an already annotated video
     const seek = (t) => { v.currentTime = Math.max(0, t - 1); v.play().catch(() => {}); };
     const setCursor = renderTimeline($("#demoTimeline"), res.events, res.meta.duration, seek);
     v.ontimeupdate = () => setCursor(v.currentTime);
