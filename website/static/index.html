@@ -17,7 +17,7 @@
   <div class="wrap">
     <a class="brand" href="#top">Cross<span>Watch</span> <small class="muted">· WIUT CV 2026</small></a>
     <div class="links">
-      <a href="#team">Team</a><a href="#approach">Approach</a><a href="#eda">EDA</a><a href="#results">Results</a>
+      <a href="#judges">For judges</a><a href="#team">Team</a><a href="#approach">Approach</a><a href="#eda">EDA</a><a href="#results">Results</a>
       <a href="#dashboard">Dashboard</a><a href="#demo">Live demo</a><a href="#report">Report</a><a href="#links">Links</a>
     </div>
     <button class="theme-btn" id="themeBtn" aria-label="toggle theme">◐</button>
@@ -34,6 +34,48 @@
     <div class="kpis" id="kpis"></div>
   </div>
 </header>
+
+<section id="judges"><div class="wrap">
+  <h2>For the judges</h2>
+  <p class="lead" style="color:var(--text)">CrossWatch finds traffic violations (jaywalking, red-light runs, cars not yielding to
+    pedestrians, stop-line violations, stopped vehicles, congestion) in the intersection CCTV video and gives an
+    accident-risk score for every frame.</p>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card">
+      <h3>Setup</h3>
+      <ul>
+        <li>No API keys and no internet needed. Model weights are in the repo (<code>weights/yolo11m.pt</code>).</li>
+        <li><code>pip install -r requirements.txt</code>, then<br><code>python run_submission.py --videos &lt;folder&gt; --out predictions.json</code></li>
+        <li>ffmpeg is not needed on the system; it comes with the <code>imageio-ffmpeg</code> package.</li>
+        <li>A GPU is recommended. On our laptop GPU the whole run (Part A + B) takes about 1x the video length, well inside the 3x limit.</li>
+        <li>The first run caches detections in <code>.cache/</code>. Delete it to recompute from scratch.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Known limitations</h3>
+      <ul>
+        <li>The sample videos have no labels, so we could not measure F1. We checked the detected events by hand against the footage.</li>
+        <li>We output 8 of the 14 classes. <code>accident</code> and <code>near_miss</code> are not in Part A because the samples have none to tune on.
+          Part B covers accidents with the risk score, but it has never seen a real crash.</li>
+        <li>Red-light runs in the first 4 seconds of red are not reported: the approach's own lamp is only visible from behind,
+          and the lamps we can read change a few seconds earlier.</li>
+        <li>The live demo below runs in your browser with a smaller model (YOLO11n) than the submission (YOLO11m), so results can differ slightly.
+          A 20-second clip takes about a minute.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Worth a look</h3>
+      <ul>
+        <li>We read the traffic-light state straight from the lamp pixels in the video, and align every clip to one reference view,
+          because the camera framing differs between the sample videos by up to 3% (<a href="#approach">Approach</a>).</li>
+        <li>The <a href="#demo">live demo</a> has a "Try the sample clip" button: one click, and it finds a red-light run at 0:04.</li>
+        <li>The <a href="#eda">EDA</a> section lists the findings that shaped each rule.</li>
+      </ul>
+      <p style="margin-bottom:0"><a href="https://github.com/javafazliddin14-source/crosswatch/tree/v1.3">Repository (v1.3)</a> ·
+        <a href="predictions_samples.json">predictions_samples.json</a></p>
+    </div>
+  </div>
+</div></section>
 
 <section id="team"><div class="wrap">
   <h2>Team</h2>
